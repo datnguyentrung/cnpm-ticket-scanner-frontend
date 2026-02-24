@@ -1,0 +1,76 @@
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.scanner-page {
+  min-height: 100vh;
+  background-color: #121212;
+  color: white;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 24rem;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 230, 118, 0.05),
+      transparent
+    );
+    pointer-events: none;
+  }
+
+  &__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    gap: 1.5rem;
+    max-width: 80rem;
+    margin: 0 auto;
+    width: 100%;
+    position: relative;
+    z-index: 10;
+
+    @media (min-width: 1024px) {
+      flex-direction: row;
+      gap: 2rem;
+      padding: 2rem;
+    }
+  }
+
+  &__left {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+
+    @media (min-width: 1024px) {
+      max-width: 40rem;
+    }
+  }
+
+  &__right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-height: 0;
+
+    @media (min-width: 1024px) {
+      max-width: 32rem;
+    }
+  }
+}

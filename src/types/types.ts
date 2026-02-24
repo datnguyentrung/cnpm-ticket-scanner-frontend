@@ -5,6 +5,31 @@ export type RoomType = "2D" | "3D" | "IMAX";
 export type ShowtimeStatus = "OPENING" | "SOLD_OUT" | "CANCELLED";
 export type TicketStatus = "HOLD" | "PAID" | "USED" | "CANCELLED";
 
+export interface Ticket {
+  id: string;
+  code: string;
+  movieTitle: string;
+  room: string;
+  seats: string[];
+  showtime: string;
+  status: "valid" | "used" | "invalid";
+  checkInTime?: string;
+}
+
+export interface RecentScan {
+  id: string;
+  ticket: Ticket;
+  timestamp: string;
+  scanStatus: "success" | "warning" | "error";
+}
+
+export interface User {
+  name: string;
+  shift: string;
+  role: "staff" | "manager";
+}
+
+
 export interface BookSeatsRequest{
   showtimeId: string;
   seatIds: number[];
