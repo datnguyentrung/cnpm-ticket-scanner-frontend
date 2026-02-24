@@ -11,6 +11,10 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 
+  @media (max-width: 1024px) {
+    width: 50%;
+  }
+
   &__camera {
     position: absolute;
     inset: 0;
@@ -127,6 +131,7 @@
   }
 
   &__instruction {
+    text-align: center;
     margin-top: 1.5rem;
     font-size: 0.875rem;
     font-weight: 500;
