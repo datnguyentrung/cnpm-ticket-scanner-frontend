@@ -1,12 +1,31 @@
+import { ShowtimeAPI } from "@/apis/ticketing/ShowtimeAPI";
 import { QrCode } from "lucide-react";
 import { motion } from "motion/react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../../components/Footer";
 import Header from "../../components/Header";
+import ShiftOverview from "../../components/ShiftOverview";
+import type { ShowtimeResponse } from "../../types/types";
 import "./StaffHome.scss";
 
 export default function StaffHome() {
   const navigate = useNavigate();
+  const [showtimes, setShowtimes] = React.useState<ShowtimeResponse[]>([]);
+
+  React.useEffect(() => {
+    const fetchShowtimes = async () => {
+      try {
+        const today = new Date().toISOString().split("T")[0]; // Get current date in YYYY-MM-DD format
+        const data = await ShowtimeAPI.getShowtimesByDate(today);
+        setShowtimes(data);
+      } catch (error) {
+        console.error("Error fetching showtimes:", error);
+      }
+    };
+
+    fetchShowtimes();
+  }, []);
 
   return (
     <div className="staff-home">
@@ -37,64 +56,17 @@ export default function StaffHome() {
           </motion.button>
 
           {/* Shift Overview Card */}
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="staff-home__overview"
-          >
-            <div className="staff-home__overview-header">
-              <h2 className="staff-home__overview-title">Shift Overview</h2>
-              <span className="staff-home__overview-badge">LIVE</span>
-            </div>
-
-            <div className="staff-home__overview-grid">
-              <div className="staff-home__overview-left">
-                <div className="staff-home__movie-info">
-                  <p className="staff-home__label">Next Movie</p>
-                  <h3 className="staff-home__movie-title">
-                    Avengers: Secret Wars
-                  </h3>
-                  <p className="staff-home__movie-room">
-                    <span className="staff-home__room-indicator" /> Room 03
-                    (IMAX)
-                  </p>
-                </div>
-                <div>
-                  <p className="staff-home__label">Time</p>
-                  <p className="staff-home__time">14:00 - 16:30</p>
-                </div>
-              </div>
-
-              <div className="staff-home__overview-right">
-                <div className="staff-home__stats">
-                  <div>
-                    <p className="staff-home__label">Checked-in</p>
-                    <p className="staff-home__stats-number">
-                      120 <span className="staff-home__stats-total">/ 200</span>
-                    </p>
-                  </div>
-                  <div className="staff-home__percentage">60%</div>
-                </div>
-
-                <div className="staff-home__progress-wrapper">
-                  <div className="staff-home__progress-bar">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: "60%" }}
-                      transition={{ duration: 1, ease: "easeOut" }}
-                      className="staff-home__progress-fill"
-                    >
-                      <div className="staff-home__progress-pulse" />
-                    </motion.div>
-                  </div>
-                  <p className="staff-home__progress-text">
-                    80 guests remaining to scan
-                  </p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+          <div className="staff-home__showtimes-wrapper">
+            {showtimes.length > 0 ? (
+              showtimes.map((showtime) => (
+                <ShiftOverview key={showtime.showtimeId} showtime={showtime} />
+              ))
+            ) : (
+              <p className="staff-home__no-showtimes">
+                No showtimes available for today.
+              </p>
+            )}
+          </div>
         </div>
       </main>
 

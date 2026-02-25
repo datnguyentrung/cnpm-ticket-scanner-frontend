@@ -131,7 +131,7 @@ export function ResultModal({
                       </div>
                       <div className="result-modal__detail-item">
                         <span className="result-modal__detail-label">
-                          Phòng:
+                          Room:
                         </span>
                         <span className="result-modal__detail-value">
                           {ticket.room}

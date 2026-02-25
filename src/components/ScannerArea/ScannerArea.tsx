@@ -1,4 +1,7 @@
+import type { IDetectedBarcode } from "@yudiel/react-qr-scanner";
+import { Scanner } from "@yudiel/react-qr-scanner";
 import { motion } from "motion/react";
+import { useState } from "react";
 import "./ScannerArea.scss";
 
 interface ScannerAreaProps {
@@ -10,10 +13,35 @@ export default function ScannerArea({
   isProcessing,
   onScan,
 }: ScannerAreaProps) {
+  const [lastScan, setLastScan] = useState("");
+
+  // Hàm này tự động chạy khi camera bắt được mã QR
+  const handleScan = (detectedCodes: IDetectedBarcode[]) => {
+    if (detectedCodes.length > 0 && !isProcessing) {
+      const text = detectedCodes[0].rawValue;
+      if (text && text !== lastScan) {
+        setLastScan(text);
+        console.log("Mã vừa quét được:", text);
+        // Gọi callback từ parent component để xử lý
+        onScan();
+      }
+    }
+  };
+
+  // Hàm này chạy khi người dùng bấm "Chặn" quyền camera hoặc máy không có camera
+  const handleError = (error: unknown) => {
+    console.error("Lỗi Camera:", error);
+    alert(
+      "Không thể mở Camera. Vui lòng cấp quyền hoặc kiểm tra lại thiết bị!",
+    );
+  };
+
   return (
     <div className="scanner-area">
-      {/* Simulated Camera Feed */}
-      <div className="scanner-area__camera" onClick={onScan} />
+      {/* Real Camera Scanner */}
+      <div className="scanner-area__camera">
+        <Scanner onScan={handleScan} onError={handleError} scanDelay={1000} />
+      </div>
 
       <div className="scanner-area__overlay">
         {/* Loading Overlay */}
@@ -44,13 +72,6 @@ export default function ScannerArea({
 
         <p className="scanner-area__instruction">Di chuyển camera vào mã QR</p>
       </div>
-
-      {/* Hidden button for demo */}
-      <button
-        onClick={onScan}
-        className="scanner-area__button"
-        aria-label="Simulate Scan"
-      />
     </div>
   );
 }
