@@ -16,9 +16,32 @@ export interface Ticket {
   checkInTime?: string;
 }
 
+export interface TicketDetailResponse {
+  ticketId: string;
+  bookingId: string;
+  showtimeId: string;
+  seatId: number;
+  seatRow: string;
+  seatNumber: number;
+  ticketCode: string;
+  price: number;
+  createdAt: Date | string;
+  status: TicketStatus;
+  checkInTime?: Date | string;
+  // Movie and showtime info
+  movieTitle: string;
+  roomName: string;
+  showtimeStart: Date | string;
+  showtimeEnd: Date | string;
+}
+
+export interface UpdateTicketStatusRequest {
+  status: TicketStatus;
+}
+
 export interface RecentScan {
   id: string;
-  ticket: Ticket;
+  ticket: TicketDetailResponse;
   timestamp: string;
   scanStatus: "success" | "warning" | "error";
 }

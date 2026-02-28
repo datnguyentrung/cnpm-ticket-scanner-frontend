@@ -30,7 +30,7 @@ export default function RecentScans({ scans }: RecentScansProps) {
                 <div
                   className={`recent-scans__item-badge recent-scans__item-badge--${scan.scanStatus}`}
                 >
-                  {scan.ticket.room}
+                  {scan.ticket.roomName}
                 </div>
                 <div className="recent-scans__item-info">
                   <p className="recent-scans__item-title">
@@ -41,7 +41,8 @@ export default function RecentScans({ scans }: RecentScansProps) {
                       size={10}
                       className={`recent-scans__item-icon recent-scans__item-icon--${scan.scanStatus}`}
                     />
-                    {scan.ticket.seats.join(", ")}
+                    {scan.ticket.seatRow}
+                    {scan.ticket.seatNumber}
                   </p>
                 </div>
               </div>

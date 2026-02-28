@@ -1,11 +1,14 @@
+import { TicketAPI } from "@/apis/ticketing/TicketAPI";
+import type { ApiResponse } from "@/types/ApiType";
 import { useState } from "react";
 import Header from "../../components/Header/Header";
 import ManualEntry from "../../components/ManualEntry/ManualEntry";
 import RecentScans from "../../components/RecentScans/RecentScans";
 import { ResultModal } from "../../components/ResultModal";
 import ScannerArea from "../../components/ScannerArea/ScannerArea";
-import { tickets } from "../../data/mockData";
-import type { RecentScan, Ticket } from "../../types/types";
+import type { RecentScan, TicketDetailResponse } from "../../types/types";
+import { formatTimeHM } from "../../utils/format";
+import { validateTicket } from "../../utils/validateTicket";
 import "./ScannerPage.scss";
 
 export default function ScannerPage() {
@@ -13,7 +16,7 @@ export default function ScannerPage() {
   const [showResult, setShowResult] = useState(false);
   const [scanResult, setScanResult] = useState<{
     status: "success" | "warning" | "error";
-    ticket: Ticket | null;
+    ticket: TicketDetailResponse | null;
     message: string;
     subMessage?: string;
   } | null>(null);
@@ -75,78 +78,122 @@ export default function ScannerPage() {
   const handleScan = async (code: string) => {
     if (!code || isProcessing) return;
 
+    if (!validateTicket(code)) {
+      setScanResult({
+        status: "error",
+        ticket: null,
+        message: "LỖI: MÃ VÉ KHÔNG HỢP LỆ",
+        subMessage: "Vui lòng quét mã QR hợp lệ.",
+      });
+      playSound("error");
+      setShowResult(true);
+      return;
+    }
+
     setIsProcessing(true);
     setManualCode(code);
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    try {
+      const response: ApiResponse<TicketDetailResponse> =
+        await TicketAPI.updateTicketStatus(code, { status: "USED" });
 
-    // Normalize code
-    const normalizedCode = code.trim().toUpperCase();
+      // Handle success response (statusCode: 200)
+      if (response.statusCode === 200 && response.message === "SUCCESS") {
+        const ticketData = response.data;
 
-    // Find ticket
-    const ticket = tickets.find((t) => t.code === normalizedCode);
+        setScanResult({
+          status: "success",
+          ticket: ticketData,
+          message: "HỢP LỆ - MỜI VÀO",
+          subMessage: "Vé hợp lệ. Chúc quý khách xem phim vui vẻ!",
+        });
 
-    let resultStatus: "success" | "warning" | "error" = "error";
-    let message = "";
-    let subMessage = "";
+        playSound("success");
+        setShowResult(true);
 
-    if (ticket) {
-      if (ticket.status === "valid") {
-        resultStatus = "success";
-        message = "HỢP LỆ - MỜI VÀO";
-        subMessage = "Vé hợp lệ. Chúc quý khách xem phim vui vẻ!";
-      } else if (ticket.status === "used") {
-        resultStatus = "warning";
-        message = "CẢNH BÁO: VÉ ĐÃ SỬ DỤNG";
-        subMessage = `Vé này đã được check-in vào lúc ${ticket.checkInTime || "trước đó"}.`;
-      } else {
-        resultStatus = "error";
-        message = "LỖI: VÉ KHÔNG HỢP LỆ";
-        subMessage = "Vé bị hủy hoặc không có hiệu lực.";
+        // Add to recent scans
+        const newScan: RecentScan = {
+          id: Date.now().toString(),
+          ticket: ticketData,
+          timestamp: formatTimeHM(new Date()),
+          scanStatus: "success",
+        };
+        setRecentScans((prev) => [newScan, ...prev].slice(0, 5));
       }
-    } else {
-      resultStatus = "error";
-      message = "LỖI: KHÔNG TÌM THẤY VÉ";
-      subMessage =
-        "Mã QR không tồn tại trên hệ thống hoặc chưa được thanh toán.";
+    } catch (error: unknown) {
+      console.error("Lỗi khi cập nhật trạng thái vé:", error);
+
+      // Handle error responses
+      const errorResponse = (
+        error as {
+          response?: {
+            data?: ApiResponse<TicketDetailResponse>;
+          };
+        }
+      )?.response?.data;
+
+      if (errorResponse) {
+        // Handle 409 - Already Used
+        if (
+          errorResponse.statusCode === 409 &&
+          errorResponse.message === "ALREADY_USED"
+        ) {
+          const checkInTime = errorResponse.data?.checkInTime
+            ? formatTimeHM(new Date(errorResponse.data.checkInTime))
+            : "trước đó";
+
+          setScanResult({
+            status: "warning",
+            ticket: errorResponse.data,
+            message: "CẢNH BÁO: VÉ ĐÃ SỬ DỤNG",
+            subMessage: `Vé này đã được check-in vào lúc ${checkInTime}.`,
+          });
+          playSound("error");
+        }
+        // Handle 422 - Ticket Not Paid
+        else if (
+          errorResponse.statusCode === 422 &&
+          errorResponse.message === "TICKET_NOT_PAID"
+        ) {
+          const currentStatus = errorResponse.data?.status || "UNKNOWN";
+
+          setScanResult({
+            status: "error",
+            ticket: errorResponse.data,
+            message: "LỖI: VÉ CHƯA THANH TOÁN",
+            subMessage: `Vé này chưa được thanh toán. Trạng thái hiện tại: ${currentStatus}.`,
+          });
+          playSound("error");
+        }
+        // Handle other errors
+        else {
+          setScanResult({
+            status: "error",
+            ticket: null,
+            message: "LỖI: KHÔNG THỂ KIỂM TRA VÉ",
+            subMessage:
+              errorResponse.message ||
+              "Đã có lỗi xảy ra khi kiểm tra vé. Vui lòng thử lại.",
+          });
+          playSound("error");
+        }
+      } else {
+        // Handle network or other errors
+        setScanResult({
+          status: "error",
+          ticket: null,
+          message: "LỖI: KHÔNG THỂ KẾT NỐI",
+          subMessage:
+            "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.",
+        });
+        playSound("error");
+      }
+
+      setShowResult(true);
+    } finally {
+      setIsProcessing(false);
+      setManualCode("");
     }
-
-    setScanResult({
-      status: resultStatus,
-      ticket: ticket || null,
-      message,
-      subMessage,
-    });
-
-    playSound(resultStatus === "success" ? "success" : "error");
-    setShowResult(true);
-    setIsProcessing(false);
-
-    // Add to recent scans if valid or used
-    if (ticket) {
-      const newScan: RecentScan = {
-        id: Date.now().toString(),
-        ticket,
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        scanStatus: resultStatus,
-      };
-      setRecentScans((prev) => [newScan, ...prev].slice(0, 5));
-    }
-
-    setManualCode("");
-  };
-
-  const simulateCameraClick = () => {
-    // Pick a random ticket code for demo purposes
-    const randomTicket = tickets[Math.floor(Math.random() * tickets.length)];
-    // Or sometimes a fake one
-    const isFake = Math.random() > 0.8;
-    const code = isFake ? "FAKE123" : randomTicket.code;
-    handleScan(code);
   };
 
   return (
@@ -155,10 +202,7 @@ export default function ScannerPage() {
 
       <main className="scanner-page__content">
         <div className="scanner-page__left">
-          <ScannerArea
-            isProcessing={isProcessing}
-            onScan={simulateCameraClick}
-          />
+          <ScannerArea isProcessing={isProcessing} onScan={handleScan} />
         </div>
 
         <div className="scanner-page__right">

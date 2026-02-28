@@ -1,13 +1,14 @@
 import { AlertTriangle, ArrowRight, CheckCircle, XCircle } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import type { Ticket } from "../../types/types";
+import type { TicketDetailResponse } from "../../types/types";
+import { formatTimeHM } from "../../utils/format";
 import "./ResultModal.scss";
 
 interface ResultModalProps {
   isOpen: boolean;
   result: {
     status: "success" | "warning" | "error";
-    ticket: Ticket | null;
+    ticket: TicketDetailResponse | null;
     message: string;
     subMessage?: string;
   } | null;
@@ -37,6 +38,13 @@ export function ResultModal({
         return null;
     }
   };
+
+  console.log(
+    "Rendering ResultModal with status:",
+    status,
+    "and ticket:",
+    ticket,
+  );
 
   return (
     <AnimatePresence>
@@ -79,13 +87,14 @@ export function ResultModal({
                 <div className="result-modal__ticket">
                   <div className="result-modal__ticket-card">
                     <p className="result-modal__label">Phòng chiếu</p>
-                    <p className="result-modal__room">{ticket.room}</p>
+                    <p className="result-modal__room">{ticket.roomName}</p>
 
                     <div className="result-modal__divider" />
 
                     <p className="result-modal__label">Ghế ngồi</p>
                     <p className="result-modal__seats">
-                      {ticket.seats.join(", ")}
+                      {ticket.seatRow}
+                      {ticket.seatNumber}
                     </p>
                   </div>
 
@@ -94,7 +103,10 @@ export function ResultModal({
                       {ticket.movieTitle}
                     </p>
                     <p className="result-modal__showtime">
-                      Suất chiếu: {ticket.showtime}
+                      Suất chiếu:{" "}
+                      {ticket.showtimeStart
+                        ? formatTimeHM(new Date(ticket.showtimeStart))
+                        : "N/A"}
                     </p>
                   </div>
                 </div>
@@ -102,13 +114,31 @@ export function ResultModal({
                 <div className="result-modal__error">
                   <p className="result-modal__error-message">{subMessage}</p>
                   {status === "warning" && ticket?.checkInTime && (
-                    <div className="result-modal__warning-box">
-                      <p className="result-modal__warning-label">
-                        Thời gian check-in trước đó:
-                      </p>
-                      <p className="result-modal__warning-time">
-                        {ticket.checkInTime}
-                      </p>
+                    <div className="result-modal__ticket">
+                      <div className="result-modal__ticket-card">
+                        <p className="result-modal__label">Phòng chiếu</p>
+                        <p className="result-modal__room">{ticket.roomName}</p>
+
+                        <div className="result-modal__divider" />
+
+                        <p className="result-modal__label">Ghế ngồi</p>
+                        <p className="result-modal__seats">
+                          {ticket.seatRow}
+                          {ticket.seatNumber}
+                        </p>
+                      </div>
+
+                      <div className="result-modal__movie-info">
+                        <p className="result-modal__movie-title">
+                          {ticket.movieTitle}
+                        </p>
+                        <p className="result-modal__showtime">
+                          Suất chiếu:{" "}
+                          {ticket.showtimeStart
+                            ? formatTimeHM(new Date(ticket.showtimeStart))
+                            : "N/A"}
+                        </p>
+                      </div>
                     </div>
                   )}
                   {status === "error" && ticket && (
@@ -118,7 +148,7 @@ export function ResultModal({
                           Mã vé:
                         </span>
                         <span className="result-modal__detail-value">
-                          {ticket.code}
+                          {ticket.ticketCode}
                         </span>
                       </div>
                       <div className="result-modal__detail-item">
@@ -134,7 +164,7 @@ export function ResultModal({
                           Room:
                         </span>
                         <span className="result-modal__detail-value">
-                          {ticket.room}
+                          {ticket.roomName}
                         </span>
                       </div>
                     </div>

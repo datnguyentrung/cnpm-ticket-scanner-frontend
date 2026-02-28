@@ -1,30 +1,32 @@
 import type { IDetectedBarcode } from "@yudiel/react-qr-scanner";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { motion } from "motion/react";
-import { useState } from "react";
 import "./ScannerArea.scss";
 
 interface ScannerAreaProps {
   isProcessing: boolean;
-  onScan: () => void;
+  onScan: (text: string) => void;
 }
 
 export default function ScannerArea({
   isProcessing,
   onScan,
 }: ScannerAreaProps) {
-  const [lastScan, setLastScan] = useState("");
+  // const [lastScan, setLastScan] = useState("");
 
   // Hàm này tự động chạy khi camera bắt được mã QR
   const handleScan = (detectedCodes: IDetectedBarcode[]) => {
     if (detectedCodes.length > 0 && !isProcessing) {
       const text = detectedCodes[0].rawValue;
-      if (text && text !== lastScan) {
-        setLastScan(text);
-        console.log("Mã vừa quét được:", text);
-        // Gọi callback từ parent component để xử lý
-        onScan();
-      }
+      // if (text && text !== lastScan) {
+      //   setLastScan(text);
+      //   console.log("Mã vừa quét được:", text);
+      //   // Gọi callback từ parent component để xử lý
+      //   onScan(text);
+      // }
+      console.log("Mã vừa quét được:", text);
+      // Gọi callback từ parent component để xử lý
+      onScan(text);
     }
   };
 

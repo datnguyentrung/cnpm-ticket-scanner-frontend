@@ -58,9 +58,18 @@ export default function StaffHome() {
           {/* Shift Overview Card */}
           <div className="staff-home__showtimes-wrapper">
             {showtimes.length > 0 ? (
-              showtimes.map((showtime) => (
-                <ShiftOverview key={showtime.showtimeId} showtime={showtime} />
-              ))
+              showtimes
+                .sort(
+                  (a, b) =>
+                    new Date(a.startTime).getTime() -
+                    new Date(b.startTime).getTime(),
+                )
+                .map((showtime) => (
+                  <ShiftOverview
+                    key={showtime.showtimeId}
+                    showtime={showtime}
+                  />
+                ))
             ) : (
               <p className="staff-home__no-showtimes">
                 No showtimes available for today.
