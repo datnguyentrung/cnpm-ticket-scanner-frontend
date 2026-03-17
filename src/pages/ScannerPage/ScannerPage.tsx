@@ -165,6 +165,18 @@ export default function ScannerPage() {
           });
           playSound("error");
         }
+        else if (
+          errorResponse.statusCode === 422 &&
+          errorResponse.message === "CHECKIN_TIME_NOT_ALLOWED"
+        ) {
+          setScanResult({
+            status: "warning",
+            ticket: errorResponse.data,
+            message: "LỖI: KHÔNG THỂ CHECK-IN",
+            subMessage: "Thời gian check-in không hợp lệ.",
+          });
+          playSound("error");
+        }
         // Handle other errors
         else {
           setScanResult({

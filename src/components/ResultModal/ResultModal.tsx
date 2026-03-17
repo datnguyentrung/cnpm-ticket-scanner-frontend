@@ -113,7 +113,7 @@ export function ResultModal({
               ) : (
                 <div className="result-modal__error">
                   <p className="result-modal__error-message">{subMessage}</p>
-                  {status === "warning" && ticket?.checkInTime && (
+                  {status === "warning" && ticket && (
                     <div className="result-modal__ticket">
                       <div className="result-modal__ticket-card">
                         <p className="result-modal__label">Phòng chiếu</p>
